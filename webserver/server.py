@@ -19,6 +19,7 @@ import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
+from datetime import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -38,7 +39,7 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #     DATABASEURI = "postgresql://ewu2493:foobar@<IP_OF_POSTGRE_SQL_SERVER>/postgres"
 #
 # Swap out the URI below with the URI for the database created in part 2
-DATABASEURI = "sqlite:///test.db"
+DATABASEURI = "postgresql://zz2247:3ft64@104.196.175.120/postgres"
 
 
 #
@@ -62,13 +63,12 @@ engine = create_engine(DATABASEURI)
 # 
 # The setup code should be deleted once you switch to using the Part 2 postgresql database
 #
-engine.execute("""DROP TABLE IF EXISTS test;""")
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
-#
+# engine.execute("""DROP TABLE IF EXISTS test;""")
+# engine.execute("""CREATE TABLE IF NOT EXISTS test (
+#   id serial,
+#   name text
+# );""")
+# engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 # END SQLITE SETUP CODE
 #
 
@@ -130,14 +130,10 @@ def index():
   # DEBUG: this is debugging code to see what request looks like
   print request.args
 
-
-  #
-  # example of a database query
-  #
-  cursor = g.conn.execute("SELECT name FROM test")
+  cursor = g.conn.execute("SELECT * FROM country")
   names = []
   for result in cursor:
-    names.append(result['name'])  # can also be accessed using result[0]
+    names.append(result['cname'])
   cursor.close()
 
   #
@@ -166,9 +162,9 @@ def index():
   #     <div>{{n}}</div>
   #     {% endfor %}
   #
+  print(names)
+
   context = dict(data = names)
-
-
   #
   # render_template looks in the templates/ folder for files.
   # for example, the below file reads template/index.html
@@ -185,18 +181,77 @@ def index():
 #
 @app.route('/another')
 def another():
-  return render_template("anotherfile.html")
+  # lifter_belongs table
+  cursor = g.conn.execute("SELECT name, cname, gender, dob, weight_class FROM lifter_belongs l LEFT JOIN (SELECT o.lid, weight_class FROM weigh_in o INNER JOIN (SELECT lid, max(weigh_time) as weigh_time FROM Weigh_In GROUP BY lid) m ON o.lid = m.lid AND o.weigh_time = m.weigh_time) w on l.lid = w.lid")
+  lifters = []
+  lifters.append(dict(Name='Name', Country='Country', Gender='Country', DOB='DOB', weight_class = "Latest Weight Class"))
+  for result in cursor:
+      lifters.append(dict(Name=result['name'], Country=result['cname'], Gender=result['gender'], DOB=result['dob'].strftime('%m/%d/%Y'), weight_class = result['weight_class']))
+  cursor.close()
+  return render_template("anotherfile.html", lifters=lifters)
 
+@app.route('/competition')
+def competition():
+  # competition_division table joined with competition and division tables
+  cursor = g.conn.execute("SELECT loc, date, age, gender, weight_class, cdid FROM competition_division cd INNER JOIN competition c ON cd.cid = c.cid INNER JOIN division d ON cd.did = d.did")
+  competitions = []
+  competitions.append(dict(Location='Location', Date='Date', Age='Age Division', Gender='Gender Division', Weight_Class='Weight Class', cdid = 'Competition ID'))
+  for result in cursor:
+      competitions.append(dict(Location=result['loc'],Date=result['date'].strftime('%m/%d/%Y'), Age=result['age'], Gender=result['gender'], Weight_Class=result['weight_class'], cdid=result['cdid']))
+  cursor.close()
+  return render_template("competition.html", competitions=competitions)
 
-# Example of adding new data to the database
 @app.route('/add', methods=['POST'])
 def add():
   name = request.form['name']
   print name
-  cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
-  g.conn.execute(text(cmd), name1 = name, name2 = name);
+  cmd = 'INSERT INTO country(cname) VALUES (:name1)';
+  g.conn.execute(text(cmd), name1 = name);
   return redirect('/')
 
+@app.route('/addlifter', methods=['POST'])
+def addlifter():
+  name = request.form['name']
+  country = request.form['cname']
+  gender = request.form['gender']
+  dob = request.form['dob']
+
+  cursor = g.conn.execute("SELECT cname FROM country")
+  names = []
+  for result in cursor:
+    names.append(result['cname'])
+  cursor.close()
+
+  if (gender not in ['M','F'] or country not in names):
+      return redirect('/another')
+
+  try:
+      datetime.strptime(dob, '%m/%d/%Y')
+  except ValueError:
+      return redirect('/another')
+
+  cmd = 'INSERT INTO lifter_belongs(name, cname, gender, dob) VALUES ((:name),(:country),(:gender),(:dob))';
+  g.conn.execute(text(cmd), name = name, country = country, gender = gender, dob = dob);
+
+  return redirect('/another')
+
+@app.route('/competitors', methods=['POST'])
+def competitors():
+  id = request.form['id']
+
+  cmd = 'SELECT name, type, attempt, weight, successful, national_ranking FROM competes c INNER JOIN (SELECT cid, did FROM competition_division WHERE cdid = (:id)) cd ON c.cid = cd.cid AND c.did = cd.did LEFT JOIN lifter_belongs l ON c.lid = l.lid LEFT JOIN country_rank r ON c.liid = r.liid'
+  try:
+    cursor = g.conn.execute(text(cmd), id = id)
+  except:
+    return redirect('/competition')
+
+  competitors = []
+  competitors.append(dict(name='Name', type='Type', attempt='Attempt#', weight='Weight', successful='Successful',national_ranking='National Ranking'))
+  for result in cursor:
+      competitors.append(dict(name=result['name'], type=result['type'], attempt=result['attempt'], weight=result['weight'], successful=result['successful'],national_ranking=result['national_ranking']))
+  cursor.close()
+  print(competitors)
+  return render_template("compete.html", competitors=competitors, x=id)
 
 @app.route('/login')
 def login():

@@ -1,0 +1,36 @@
+<html>
+<style>
+body{
+    font-size: 15pt;
+    font-family: arial;
+}
+</style>
+
+
+<body>
+    <h1>Powerlifting Competitions</h1>
+
+    <table>
+        {% for competition in competitions %}
+        <TR>
+            <TD class="c1">{{competition.Location}}</TD>
+            <TD class="c2">{{competition.Date}}</TD>
+            <TD class="c3">{{competition.Age}}</TD>
+            <TD class="c4">{{competition.Gender}}</TD>
+            <TD class="c5">{{competition.Weight_Class}}</TD>
+            <TD class="c5">{{competition.cdid}}</TD>
+        </TR>
+        {% endfor %}
+    </table>
+
+    <p><a href="/">List All Countries</a></p>
+    <p><a href="/another">List All Powerlifters</a></p>
+
+<form method="POST" action="/competitors">
+    <p>Enter competition id to view competitors: <input type="text" name="id"> <input type="submit" value="View Competitors"></p>
+</form>
+
+</body>
+
+
+</html>

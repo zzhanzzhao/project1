@@ -1,0 +1,31 @@
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+    
+    
+    <body>
+        <h1>Powerlifters for Competition {{x}}</h1>
+        
+        <table>
+            {% for competitor in competitors %}
+            <TR>
+                <TD class="c1">{{competitor.name}}</TD>
+                <TD class="c2">{{competitor.type}}</TD>
+                <TD class="c3"><SPAN>{{competitor.attempt}}</SPAN></TD>
+                <TD class="c4"><SPAN>{{competitor.weight}}</SPAN></TD>
+                <TD class="c5"><SPAN>{{competitor.successful}}</SPAN></TD>
+                <TD class="c5"><SPAN>{{competitor.national_ranking}}</SPAN></TD>
+            </TR>
+            {% endfor %}
+        </table>
+        
+        <p><a href="/competition">List All Competitions</a></p>
+        
+    </body>
+    
+    
+</html>

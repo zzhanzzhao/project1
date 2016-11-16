@@ -8,8 +8,7 @@
 
 
 <body>
-  <h1>Some famous Computer Scientists</h1>
-  <div>{{data}}</div>
+  <h1>Countries with Powerlifters</h1>
 
   <div>
     {% for n in data %}
@@ -17,10 +16,11 @@
     {% endfor %}
   </div>
 
-<p><a href="/another">Go to the other page</a></p>
+<p><a href="/another">List All Powerlifters</a></p>
+<p><a href="/competition">List All Competitions</a></p>
 
 <form method="POST" action="/add">
-<p>Name of new computer scientist: <input type="text" name="name"> <input type="submit" value="Add"></p>
+<p>Code of a new country: <input type="text" name="name"> <input type="submit" value="Add"></p>
 </form>
 
 </body>

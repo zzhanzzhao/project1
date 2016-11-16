@@ -1,1 +1,40 @@
-hello, I am another file!
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+    
+    
+    <body>
+        <h1>All Powerlifters</h1>
+        
+        <table>
+            {% for lifter in lifters %}
+            <TR>
+                <TD class="c1">{{lifter.Name}}</TD>
+                <TD class="c2">{{lifter.Country}}</TD>
+                <TD class="c3"><SPAN>{{lifter.Gender}}</SPAN></TD>
+                <TD class="c4"><SPAN>{{lifter.DOB}}</SPAN></TD>
+                <TD class="c5"><SPAN>{{lifter.weight_class}}</SPAN></TD>
+            </TR>
+            {% endfor %}
+        </table>
+        
+        <p><a href="/">List All Countries</a></p>
+        <p><a href="/competition">List All Competitions</a></p>
+        
+        <form method="POST" action="/addlifter">
+            <p>Name of a new powerlifter: <input type="text" name="name"></p>
+            <p>Country of a new powerlifter: <input type="text" name="cname"></p>
+            <p>Gender of a new powerlifter: <input type="text" name="gender"></p>
+            <p>DOB of a new powerlifter: <input type="text" name="dob"></p>
+            <p><input type="submit" value="Add"></p>
+        </form>
+        
+    </body>
+    
+    
+</html>
+
